@@ -62,7 +62,12 @@ module.exports = class {
   }
 
   async startTailingOplog(db) {
-    const filter = { ts: { $gt: await this.getLastTimestamp() } }
+    const filter = {
+      ts: {
+        $gt: await this.getLastTimestamp()
+      },
+      ns: `${dbName}.${collectionName}`
+    }
 
     const oplog = await db.collection('oplog.rs')
     const cursor = await oplog
@@ -79,14 +84,10 @@ module.exports = class {
     //   const message = await cursor.next()
     //   console.log(message.ns)
     //   console.log(`${dbName}.${collectionName}`)
-    //   if (message.ns === `${dbName}.${collectionName}`) {
-    //     console.log(message)
-    //     const lowBits = message.ts.getLowBits()
-    //     const highBits = message.ts.getHighBits()
-    //     console.log(new Timestamp(lowBits, highBits))
-    //   } else {
-    //     console.log(new Date() + ' rubbish')
-    //   }
+    //   console.log(message)
+    //   const lowBits = message.ts.getLowBits()
+    //   const highBits = message.ts.getHighBits()
+    //   console.log(new Timestamp(lowBits, highBits))
     //   hasNext = await cursor.hasNext()
     // }
 
@@ -94,11 +95,7 @@ module.exports = class {
       let hasNext = await cursor.hasNext()
       while (hasNext) {
         const message = await cursor.next()
-        if (message.ns === `${dbName}.${collectionName}`) {
-          observer.next(message)
-        } else {
-          console.log(new Date() + ' rubbish')
-        }
+        observer.next(message)
         hasNext = await cursor.hasNext()
       }
     }).bufferCount(100)
