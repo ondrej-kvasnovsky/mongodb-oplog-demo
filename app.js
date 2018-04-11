@@ -1,7 +1,7 @@
-const WatchService = require('./watch-service')
-const watchService = new WatchService()
+const OplogService = require('./oplog-service')
+const oplogService = new OplogService()
 ;(async () => {
-  await watchService.start()
+  await oplogService.start()
 })().catch(err => {
   console.error(err)
 })

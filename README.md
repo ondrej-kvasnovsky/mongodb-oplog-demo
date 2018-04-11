@@ -1,13 +1,13 @@
-# MongoDB Watch (Change Stream) Demo
+# MongoDB Oplog Demo
 
-Connects to MongoDB collection and creates [change stream](https://docs.mongodb.com/manual/changeStreams/). 
-Is able to resume using last change stream ID object.  
+Connects to MongoDB collection and reads oplog (operation logs) collection. 
+Is able to resume using the latest timestamp.  
 
 ## Requirements
 
 * nodejs
 * npm
-* mongodb 3.6 and higher
+* mongodb
 
 ## MongoDB ReplicaSet
 
@@ -17,6 +17,8 @@ Use `mongo-replicaset/setup.sh` to create mongodb using replica set.
 After you ran `sh setup.sh`, you need to run: 
 ```
 rs.initiate({_id:"rs0", members: [{_id:0, host:"127.0.0.1:27017", priority:100}, {_id:1, host:"127.0.0.1:27018", priority:50}, {_id:2, host:"127.0.0.1:27019", arbiterOnly:true}]})
+use test
+db.createCollection('items')
 ```
 
 Connect to database and create `test` database and `items` collection in it.
