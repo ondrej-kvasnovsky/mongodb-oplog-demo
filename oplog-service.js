@@ -62,18 +62,7 @@ module.exports = class {
   }
 
   async startTailingOplog(db) {
-    // one way to tail oplog
-    //   const collection = db.collection('oplog.rs')
-    //   collection.find({}, {tailable: true}).each(function(err, entry) {
-    //       if (err) {
-    //           // handle error
-    //       } else {
-    //           // got a new oplog entry
-    //           console.log('--- entry', entry)
-    //       }
-    //   })
-
-    const filter = {ts: {$gt: new Timestamp(0, 1523402029)}}
+    const filter = { ts: { $gt: await this.getLastTimestamp() } }
 
     const oplog = await db.collection('oplog.rs')
     const cursor = await oplog
@@ -101,27 +90,6 @@ module.exports = class {
     //   hasNext = await cursor.hasNext()
     // }
 
-    // not able to get this approach working...
-    // const query = {
-    //   ts: { $gt: -1 }
-    // }
-    // const options = {
-    //   tailable: true,
-    //   awaitdata: true,
-    //   oplogReplay: true,
-    //     numberOfRetries: -1
-    // }
-    // await db.collection('oplog.rs')
-    //   .find(query, options)
-    //   .stream()
-    //   .on('data', data => console.log(data))
-    //   .on('end', () => {
-    //     console.log('Tailable cursor was ended')
-    //   })
-    //   .on('close', () => {
-    //     console.log('Tailable cursor was closed')
-    //   })
-
     const observable = Rx.Observable.create(async observer => {
       let hasNext = await cursor.hasNext()
       while (hasNext) {
@@ -137,6 +105,9 @@ module.exports = class {
     const subscription = observable.subscribe(
       value => {
         console.log('Reading oplog', value)
+        const low = value[value.length - 1].ts.getLowBits()
+        const high = value[value.length - 1].ts.getHighBits()
+        fs.writeFileSync(lastIdFileName, low + ':' + high)
       },
       err => {
         console.log(err)
@@ -148,11 +119,12 @@ module.exports = class {
     )
   }
 
-  getLastTimestamp() {
-    let timestamp = null
+  async getLastTimestamp() {
+    let timestamp = new Timestamp(0, 0)
     if (fs.existsSync(lastIdFileName)) {
-      const text = fs.readFileSync(lastIdFileName)
-      timestamp = text.split(':')
+      const text = await fs.readFileSync(lastIdFileName, 'utf-8')
+      const array = text.split(':')
+      timestamp = new Timestamp(array[0], array[1])
     }
     return timestamp
   }
