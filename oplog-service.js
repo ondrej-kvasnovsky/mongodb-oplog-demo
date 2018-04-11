@@ -70,10 +70,13 @@ module.exports = class {
     }
 
     const oplog = await db.collection('oplog.rs')
+    const options = {
+      projection: { ts: 1, o: 1 }
+    }
     const cursor = await oplog
-      .find(filter)
+      .find(filter, options)
       .batchSize(100)
-      .addCursorFlag('oplogReplay', true)
+      // .addCursorFlag('oplogReplay', true) // we can use projection when this is on
       .addCursorFlag('noCursorTimeout', true)
       .addCursorFlag('tailable', true)
       .addCursorFlag('awaitData', true)
